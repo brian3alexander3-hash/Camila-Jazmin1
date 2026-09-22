@@ -1,0 +1,56 @@
+
+name: Descomprimir Camila Jazmin
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Buscar archivo ZIP
+        run: |
+          echo "Archivos disponibles:"
+          find . -maxdepth 3 -type f
+
+          ZIP=$(find . -maxdepth 3 -type f \
+            -iname "*.zip" \
+            -print -quit)
+
+          if [ -z "$ZIP" ]; then
+            echo "ERROR: No se encontró ningún ZIP."
+            exit 1
+          fi
+
+          echo "Archivo encontrado: $ZIP"
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Descomprimir proyecto
+        run: |
+          mkdir -p extraido
+          unzip -o "$ZIP" -d extraido
+
+      - name: Guardar archivos en GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          cp -a extraido/. .
+          rm -rf extraido
+
+          git add -A
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Descomprimir proyecto Camila Jazmin"
+            git push
+          else
+            echo "No hay cambios para guardar."
+          fi
